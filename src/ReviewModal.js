@@ -1,89 +1,74 @@
-const ReviewModal = ({ show, onClose, onPostReview, currentReview, onDeleteReview }) => {
-    const [rating, setRating] = useState(0);
-    const [hover, setHover] = useState(0);
-    const [comment, setComment] = useState('');
-    const [username, setUsername] = useState('');
+import React, { useState } from 'react';
 
-    // I-sync ang data kung may existing review na
-    useEffect(() => {
-        if (currentReview) {
-            setRating(currentReview.rating);
-            setComment(currentReview.comment);
-            setUsername(currentReview.username);
-        } else {
-            setRating(0);
-            setComment('');
-            setUsername('');
-        }
-    }, [currentReview, show]);
+const backdropStyle = {
+    position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+    backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 2000,
+    display: 'flex', alignItems: 'center', justifyContent: 'center'
+};
 
-    if (!show) return null;
+const ReviewModal = ({ productId, onClose, onSave }) => {
+    const [rating, setRating] = useState(5);
+    const [comment, setComment] = useState("");
+    const [reviewerName, setReviewerName] = useState("");
+
+    const handleSubmit = () => {
+        if(!reviewerName.trim() || !comment.trim()) return alert("Please fill in your name and comment.");
+        
+        onSave({
+            id: Date.now(),
+            productId: productId,
+            userName: reviewerName,
+            rating: rating,
+            comment: comment,
+            isUser: true
+        });
+        onClose();
+    };
 
     return (
         <div style={backdropStyle}>
-            <div className="bg-white p-4 rounded-5 shadow-lg position-relative" style={{ width: '90%', maxWidth: '450px' }}>
-                <button className="btn-close position-absolute top-0 end-0 m-4" onClick={onClose}></button>
-                <h4 className="fw-bold mb-4 text-center mt-2">Write a Review</h4>
-                
-                <div className="mb-3">
-                    <input 
-                        type="text" 
-                        className="form-control rounded-pill py-2 px-3 bg-light border-0" 
-                        placeholder="Your Name" 
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                    />
+            <div className="bg-white p-5 rounded-5 shadow-lg text-center" style={{ maxWidth: '400px', width: '90%' }}>
+                <h4 className="fw-bold mb-4">Your Feedback</h4>
+                <div className="mb-4 fs-2 text-warning">
+                    {[1, 2, 3, 4, 5].map(n => (
+                        <i 
+                            key={n} 
+                            className={`bi ${n <= rating ? 'bi-star-fill' : 'bi-star'} px-1`} 
+                            style={{ cursor: 'pointer' }} 
+                            onClick={() => setRating(n)}
+                        ></i>
+                    ))}
                 </div>
-
-                <div className="text-center mb-4">
-                    <div className="d-flex justify-content-center gap-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                            <i 
-                                key={star}
-                                className={`bi fs-1 ${star <= (hover || rating) ? 'bi-star-fill text-warning' : 'bi-star text-secondary'}`}
-                                style={{ cursor: 'pointer', transition: '0.2s' }}
-                                onMouseEnter={() => setHover(star)}
-                                onMouseLeave={() => setHover(0)}
-                                onClick={() => setRating(star)}
-                            ></i>
-                        ))}
-                    </div>
-                    <p className="text-muted small mt-2">{rating > 0 ? `${rating} Stars Selected` : 'Tap stars to rate'}</p>
-                </div>
-
+                <input 
+                    type="text" 
+                    className="form-control rounded-pill mb-3 bg-light py-2 px-4 border-0 shadow-sm" 
+                    placeholder="Your Name" 
+                    value={reviewerName} 
+                    onChange={(e) => setReviewerName(e.target.value)} 
+                />
                 <textarea 
-                    className="form-control rounded-4 p-3 bg-light border-0 mb-4" 
-                    rows="4" 
-                    placeholder="Share your experience..." 
+                    className="form-control rounded-4 mb-4 bg-light py-3 px-4 border-0 shadow-sm" 
+                    rows="3" 
+                    placeholder="Write your thoughts..." 
                     value={comment} 
                     onChange={(e) => setComment(e.target.value)}
                 ></textarea>
-
-                <div className="d-flex flex-column gap-2">
-                    <button className="btn btn-primary rounded-pill fw-bold py-2" onClick={() => {
-                        if(rating === 0 || !username) alert('Please provide your name and a rating!');
-                        else { 
-                            onPostReview({ username, rating, comment }); 
-                            onClose(); 
-                        }
-                    }}>
-                        {currentReview ? 'Update Review' : 'Post Review'}
-                    </button>
-                    
-                    {currentReview && (
-                        <button className="btn btn-outline-danger rounded-pill fw-bold py-2" onClick={() => {
-                            if(window.confirm('Delete this review?')) {
-                                onDeleteReview();
-                                onClose();
-                            }
-                        }}>
-                            Delete Review
-                        </button>
-                    )}
-                    
-                    <button className="btn btn-link text-muted text-decoration-none" onClick={onClose}>Cancel</button>
-                </div>
+                <button 
+                    className="btn w-100 py-3 rounded-pill fw-bold text-white" 
+                    style={{ backgroundColor: '#1a2a3a' }} 
+                    onClick={handleSubmit}
+                >
+                    Submit Experience
+                </button>
+                <button 
+                    className="btn btn-link btn-sm text-muted mt-3 text-decoration-none" 
+                    onClick={onClose}
+                >
+                    Cancel
+                </button>
             </div>
         </div>
     );
 };
+
+export default ReviewModal;

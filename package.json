@@ -1,5 +1,5 @@
 {
-  "homepage": "https://iyong-username.github.io/glow-beauty",
+  "homepage": "https://jammy0131.github.io/glow-beauty",
   "name": "glow-beauty",
   "version": "0.1.0",
   "private": true,
@@ -22,7 +22,6 @@
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build"
-    
   },
   "eslintConfig": {
     "extends": [
