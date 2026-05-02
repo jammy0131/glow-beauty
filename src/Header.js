@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const Header = ({ cartCount, setView, setShowCart, selectedCategory, setSelectedCategory, onLogout }) => {
+const Header = ({ cartCount, setView, setShowCart, selectedCategory, setSelectedCategory, onLogout, hasActiveOrder }) => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const categories = ['All Categories', 'Skincare', 'Makeup', 'Tools', 'Body Care', 'Fragrance', 'Hair Care'];
 
@@ -45,16 +45,18 @@ const Header = ({ cartCount, setView, setShowCart, selectedCategory, setSelected
                         </ul>
                     </div>
 
-                    {/* --- MY ORDERS (SHOPEE STYLE) --- */}
-                    <button
-                        className="btn border-0 p-2"
-                        onClick={() => setView('track-order')}
-                        title="My Orders"
-                        style={{ color: '#b0926a' }}
-                    >
-                        <i className="bi bi-truck fs-4"></i>
-                        <span className="d-none d-lg-inline ms-1 small fw-bold">Orders</span>
-                    </button>
+                    {/* --- CONDITIONAL ORDERS BUTTON (SHOPEE STYLE) --- */}
+                    {hasActiveOrder && (
+                        <button
+                            className="btn border-0 p-2 animate__animated animate__fadeIn"
+                            onClick={() => setView('track-order')}
+                            title="My Orders"
+                            style={{ color: '#b0926a' }}
+                        >
+                            <i className="bi bi-truck fs-4"></i>
+                            <span className="d-none d-lg-inline ms-1 small fw-bold">Orders</span>
+                        </button>
+                    )}
 
                     {/* CUSTOMER SERVICE */}
                     <button

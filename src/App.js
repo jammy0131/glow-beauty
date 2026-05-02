@@ -11,6 +11,7 @@ import Receipt from './Receipt';
 import ReviewModal from './ReviewModal';
 import CustomerService from './CustomerService';
 import TrackOrder from './TrackOrder';
+import ChatBox from './ChatBox';
 
 const loadCSS = (href) => {
     if (!document.querySelector(`link[href="${href}"]`)) {
@@ -50,9 +51,14 @@ export default function App() {
     const [view, setView] = useState('gallery');
     const [showCart, setShowCart] = useState(false);
     const [showReviewModal, setShowReviewModal] = useState(false);
+    const [isChatOpen, setIsChatOpen] = useState(false); 
+    const [activeRider, setActiveRider] = useState(''); // NEW: Dynamic rider state
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [orderData, setOrderData] = useState({ name: '', phone: '', address: '' });
+    const [orderData, setOrderData] = useState(() => {
+        const savedData = localStorage.getItem('glow_order_data');
+        return savedData ? JSON.parse(savedData) : { name: '', phone: '', address: '' };
+    });
     const [selectedCategory, setSelectedCategory] = useState('All Categories');
     const [paymentMethod, setPaymentMethod] = useState('GCash');
     const [paymentRef, setPaymentRef] = useState('');
@@ -73,6 +79,7 @@ export default function App() {
         localStorage.setItem('glow_active_order_id', activeOrderId);
     }, [lastOrder, activeOrderId]);
     useEffect(() => { localStorage.setItem('glow_beauty_reviews', JSON.stringify(reviews)); }, [reviews]);
+    useEffect(() => { localStorage.setItem('glow_order_data', JSON.stringify(orderData)); }, [orderData]);
 
     // --- NOTIFICATION HANDLER ---
     const showNotification = (msg, type = 'success') => {
@@ -108,9 +115,13 @@ export default function App() {
 
     const handleLogout = () => {
         localStorage.removeItem('glow_is_logged_in');
+        localStorage.removeItem('glow_active_order_id');
         setIsLoggedIn(false);
         setAuthMode('login');
         setCart([]);
+        setActiveOrderId('');
+        setIsChatOpen(false);
+        setActiveRider('');
         showNotification("Logged out successfully.");
     };
 
@@ -136,7 +147,7 @@ export default function App() {
         setLastOrder([...cart]);
         setCart([]);
         setView('receipt');
-        showNotification("Payment confirmed!");
+        showNotification("Payment confirmed! Tracking enabled.");
     };
 
     if (!isLoggedIn) {
@@ -160,6 +171,7 @@ export default function App() {
                 onLogout={handleLogout}
                 selectedCategory={selectedCategory}
                 setSelectedCategory={setSelectedCategory}
+                hasActiveOrder={!!activeOrderId}
             />
 
             {showCart && (
@@ -198,22 +210,21 @@ export default function App() {
                 )}
 
                 {view === 'checkout' && (
-                    <Checkout 
-                        orderData={orderData} 
-                        setOrderData={setOrderData} 
+                    <Checkout
+                        orderData={orderData}
+                        setOrderData={setOrderData}
                         onContinue={() => {
-                            // Validation bago lumipat sa Payment
                             if (!orderData.name.trim() || !orderData.phone.trim() || !orderData.address.trim()) {
                                 showNotification("Please fill up all delivery details!", "danger");
                                 return;
                             }
                             setView('payment');
-                        }} 
+                        }}
                     />
                 )}
 
                 {view === 'payment' && <Payment paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod} onConfirm={handleConfirmPayment} />}
-                
+
                 {view === 'receipt' && (
                     <Receipt
                         cart={lastOrder}
@@ -226,9 +237,28 @@ export default function App() {
                         onTrackOrder={() => setView('track-order')}
                     />
                 )}
-                
-                {view === 'track-order' && <TrackOrder orderId={activeOrderId} orderData={orderData} lastOrder={lastOrder} onBack={() => setView('gallery')} />}
-                
+
+                {view === 'track-order' && (
+                    activeOrderId ? (
+                        <TrackOrder
+                            orderId={activeOrderId}
+                            orderData={orderData}
+                            lastOrder={lastOrder}
+                            onBack={() => setView('gallery')}
+                            onOpenChat={(name) => {
+                                setActiveRider(name); // Nakukuha na ang dynamic name dito
+                                setIsChatOpen(true);
+                            }} 
+                        />
+                    ) : (
+                        <div className="text-center py-5">
+                            <i className="bi bi-cart-x display-1 text-muted"></i>
+                            <h4 className="mt-3">Bawal po! Mag-checkout muna bago mag-track.</h4>
+                            <button className="btn btn-primary mt-3" onClick={() => setView('gallery')}>Back to Shop</button>
+                        </div>
+                    )
+                )}
+
                 {view === 'report-damage' && (
                     <CustomerService
                         preFilledOrderId={activeOrderId}
@@ -241,6 +271,14 @@ export default function App() {
                 )}
             </div>
 
+            {/* --- INTERACTIVE CHAT BOX COMPONENT --- */}
+            {isChatOpen && (
+                <ChatBox
+                    riderName={activeRider} // In-update para gamitin ang state
+                    onClose={() => setIsChatOpen(false)}
+                />
+            )}
+
             {showReviewModal && (
                 <ReviewModal
                     productId={selectedProduct?.id}
@@ -252,6 +290,7 @@ export default function App() {
                 />
             )}
 
+            {/* TOAST SYSTEM */}
             {toast.show && (
                 <div className="position-fixed bottom-0 end-0 p-3 animate__animated animate__fadeInUp" style={{ zIndex: 3000 }}>
                     <div className={`toast show align-items-center text-white border-0 shadow-lg ${toast.type === 'success' ? 'bg-success' : 'bg-danger'}`} role="alert">
